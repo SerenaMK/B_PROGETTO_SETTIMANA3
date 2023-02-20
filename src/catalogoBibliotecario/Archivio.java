@@ -32,11 +32,13 @@ public class Archivio {
 		Utente u1 = new Utente("Mario", "Rossi", LocalDate.of(1994, 11, 29));
 		Utente u2 = new Utente("Luigi", "Verdi", LocalDate.of(1990, 05, 20));
 		Utente u3 = new Utente("Anna", "Bianchi", LocalDate.of(2000, 12, 8));
+		Utente u4 = new Utente("Giovanni", "Neri", LocalDate.of(2002, 03, 15));
 		
 		Prestito pr1 = new Prestito(u1, l2, LocalDate.of(2022, 12, 18));
 		Prestito pr2 = new Prestito(u1, l3, LocalDate.of(2023, 8, 15));
-		Prestito pr3 = new Prestito(u2, l1, LocalDate.of(2023, 5, 30));
+		Prestito pr3 = new Prestito(u2, l1, LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 5));
 		Prestito pr4 = new Prestito(u3, r1, LocalDate.of(2023, 1, 10));
+		Prestito pr5 = new Prestito(u4, r2, LocalDate.of(2023, 2, 4));
 		
 		lineBreak();
 		
@@ -51,10 +53,12 @@ public class Archivio {
 		addUtente(u1);
 		addUtente(u2);
 		addUtente(u3);
+		addUtente(u4);
 		addPrestito(pr1);
 		addPrestito(pr2);
 		addPrestito(pr3);
 		addPrestito(pr4);
+		addPrestito(pr5);
 		
 		lineBreak();
 		
@@ -70,7 +74,7 @@ public class Archivio {
 		lineBreak();
 		
 		// Trovo tutti i libri di un dato autore
-		List<Libri> lista1 = getElementoByAutore("C. S. Pacat");
+		List<Libri> lista1 = getLibroByAutore("C. S. Pacat");
 		for (Libri l : lista1) {
 			log.info("Titolo: \"" + l.getTitolo() + "\"");
 		}
@@ -108,11 +112,41 @@ public class Archivio {
 		}
 		
 		lineBreak();
+		
+		// Trovo tutti i libri di un dato genere
+		List<Libri> lista6 = getLibroByGenere("Fantasy");
+		for (Libri l : lista6) {
+		log.info("Titolo: \"" + l.getTitolo() + "\"");
+		}
+		
+		lineBreak();
+		
+		// Trovo tutte le riviste con una data periodicità
+		List<Riviste> lista7 = getRivistaByPeriodicita(Periodicita.MENSILE);
+		for (Riviste l : lista7) {
+		log.info("Titolo: \"" + l.getTitolo() + "\"");
+		}
+		
+		lineBreak();
+		
+		// Trovo tutte le pubblicazioni con numero di pagine minore o uguale ad un dato numero
+		List<Pubblicazioni> lista8 = getElementoByPagine(140);
+		for (Pubblicazioni p : lista8) {
+			log.info("Titolo: \"" + p.getTitolo() + "\" - Numero pagine: " + p.getPagine());
+		}
+		
+		lineBreak();
+		
+		// Trovo gli utenti che hanno preso in prestito una data pubblicazione tramite ISBN
+		List<Utente> lista9 = getUtenteByISBN("978-1-78663-729-1");
+		for (Utente u : lista9) {
+			log.info(u.getNome() + " " + u.getCognome() + " - Num. Tessera: " + u.getNumeroTessera());
+		}
+		
 
 	}
 	
-	
-	
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	
     // Aggiunta di un elemento del catalogo
@@ -180,11 +214,10 @@ public class Archivio {
 		} finally {
 			em.close();
 		}
-		
 	}
 	
 	// Ricerca per autore
-	private static List<Libri> getElementoByAutore(String autore) {
+	private static List<Libri> getLibroByAutore(String autore) {
 		EntityManager em = emf.createEntityManager();
 		
 		try {
@@ -194,6 +227,7 @@ public class Archivio {
 			
 			em.getTransaction().commit();
 			log.info("Lista di libri con autore \"" + autore + "\":");
+			
 			return q.getResultList();
 		} finally {
 			em.close();
@@ -244,7 +278,7 @@ public class Archivio {
 		
 		try {
 			em.getTransaction().begin();
-			Query q = em.createQuery("SELECT p FROM Prestito p WHERE p.restituzionePrevista < :data");
+			Query q = em.createQuery("SELECT p FROM Prestito p WHERE p.restituzionePrevista < :data AND p.restituzioneEffettiva = null");
 			q.setParameter("data", today);
 			
 			em.getTransaction().commit();
@@ -257,12 +291,83 @@ public class Archivio {
 	}
 	
 	
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	////////// METODI AGGIUNTIVI //////////
+	
+	// Ricerca libro per genere
+	private static List<Libri> getLibroByGenere(String genere) {
+		EntityManager em = emf.createEntityManager();
+		
+		try {
+			em.getTransaction().begin();
+			Query q = em.createQuery("SELECT l FROM Libri l WHERE l.genere = :genere");
+			q.setParameter("genere", genere);
+			
+			em.getTransaction().commit();
+			log.info("Lista di libri di genere \"" + genere + "\":");
+			
+			return q.getResultList();
+		} finally {
+			em.close();
+		}
+	}
+	
+	// Ricerca rivista per periodicità
+	private static List<Riviste> getRivistaByPeriodicita(Periodicita p) {
+		EntityManager em = emf.createEntityManager();
+		
+		try {
+			em.getTransaction().begin();
+			Query q = em.createQuery("SELECT l FROM Riviste l WHERE l.periodicita = :periodicita");
+			q.setParameter("periodicita", p);
+			
+			em.getTransaction().commit();
+			log.info("Lista di riviste con periodicità " + p + ":");
+			
+			return q.getResultList();
+		} finally {
+			em.close();
+		}
+	}
+	
+	// Ricerca per numero di pagine
+	private static List<Pubblicazioni> getElementoByPagine(int pagine) {
+		EntityManager em = emf.createEntityManager();
+		
+		try {
+			em.getTransaction().begin();
+			Query q = em.createQuery("SELECT p FROM Pubblicazioni p WHERE p.pagine <= :pagine");
+			q.setParameter("pagine", pagine);
+			
+			em.getTransaction().commit();
+			log.info("Lista di pubblicazioni con numero di pagine inferiore o uguale a " + pagine + ":");
+			return q.getResultList();
+		} finally {
+			em.close();
+		}
+	}
+	
+	// Trova gli utenti che hanno preso in prestito una data pubblicazione tramite ISBN
+	private static List<Utente> getUtenteByISBN(String isbn) {
+		EntityManager em = emf.createEntityManager();
+		
+		try {
+			em.getTransaction().begin();
+			Query q = em.createQuery("SELECT p.utente FROM Prestito p WHERE p.elementoPrestato.id = :isbn");
+			q.setParameter("isbn", isbn);
+			
+			em.getTransaction().commit();
+			log.info("Utenti che hanno preso in prestito la pubblicazione con ISBN " + isbn + ":");
+			return q.getResultList();
+		} finally {
+			em.close();
+		}
+		
+	}
 	
 	
 	
-	////////////////////////////////////////////////
-	
-	//// METODI AGGIUNTIVI
 	
 	// Aggiugi utente
 	public static void addUtente(Utente u) {
