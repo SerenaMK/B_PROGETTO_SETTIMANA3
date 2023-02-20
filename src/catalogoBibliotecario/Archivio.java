@@ -140,7 +140,7 @@ public class Archivio {
 		// Trovo gli utenti che hanno preso in prestito una data pubblicazione tramite ISBN
 		List<Utente> lista9 = getUtenteByISBN("978-1-78663-729-1");
 		for (Utente u : lista9) {
-			log.info(u.getNome() + " " + u.getCognome() + " - Num. Tessera: " + u.getNumeroTessera());
+			log.info("Utente: " + u.getNome() + " " + u.getCognome() + " - Num. Tessera: " + u.getNumeroTessera());
 		}
 		
 
