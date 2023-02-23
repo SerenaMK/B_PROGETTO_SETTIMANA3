@@ -173,6 +173,7 @@ public class Archivio {
 		try {
 			em.getTransaction().begin();
 			Pubblicazioni p = em.find(Pubblicazioni.class, isbn);
+			em.remove(p);
 			em.getTransaction().commit();
 			log.info("Pubblicazione con codice ISBN " + isbn + " cancellata dal DB.");
 		} catch (Exception ec) {
